@@ -22,7 +22,7 @@
     - 确保已安装 [`LeviLamina`](https://github.com/LiteLDev/LeviLamina)。
     - 下载并安装  [`GMLIB`](https://github.com/GroupMountain/GMLIB-Release)。
 2. 🎯 安装 FreeCamera
-    - 从[发行版](https://github.com/GroupMountain/FreeCamera/releases)下载最新版本。
+    - 从[发行版](https://github.com/YUMU1658/FreeCamera/releases)下载最新版本。
     - 将解压后的 `FreeCamera` 文件夹放入服务器 `./plugins/` 目录。
 
 ## 🎍 使用

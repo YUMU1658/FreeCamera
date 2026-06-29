@@ -24,7 +24,7 @@ A high-performance free camera mod for Minecraft Bedrock Dedicated Server (BDS).
     - Ensure [`LeviLamina`](https://github.com/LiteLDev/LeviLamina) is installed.
     - Download [`GMLIB`](https://github.com/GroupMountain/GMLIB-Release) and install it.
 2. 🎯 Install FreeCamera
-    - Download the latest release from [Releases](https://github.com/GroupMountain/FreeCamera/releases).
+    - Download the latest release from [Releases](https://github.com/YUMU1658/FreeCamera/releases).
     - Extract the `FreeCamera` folder into `./plugins/` directory.
 
 ## 🧭 Usage
