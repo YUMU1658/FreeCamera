@@ -1,60 +1,84 @@
 #include "Global.h"
-#include "gmlib/mc/network/BinaryStream.h"
 #include "gmlib/mc/world/actor/Player.h"
 #include "ll/api/memory/Hook.h"
 #include "mc/deps/core/math/Vec3.h"
 #include "mc/legacy/ActorUniqueID.h"
 #include "mc/network/ServerNetworkHandler.h"
 #include "mc/network/packet/AddPlayerPacket.h"
+#include "mc/network/packet/PlayerListPacket.h"
+#include "mc/network/packet/PlayerListPacketType.h"
 #include "mc/network/packet/RemoveActorPacket.h"
+#include "mc/network/packet/SetPlayerGameTypePacket.h"
 #include "mc/network/packet/UpdateAbilitiesPacket.h"
 #include "mc/server/ServerPlayer.h"
-#include "mc/world/actor/player/SerializedSkinImpl.h"
-#include "mc/world/actor/player/SerializedSkinRef.h"
+#include "mc/world/actor/player/PlayerListEntry.h"
+
+#include <cstdlib>
+
+PlayerListEntry::PlayerListEntry(PlayerListEntry const&) {
+    std::terminate();
+}
 
 std::unordered_set<uint64> FreeCamList;
 
 namespace FreeCamera {
 
 void EnableFreeCameraPacket(Player* pl) {
-    ((gmlib::GMPlayer*)pl)->setClientGamemode(GameType::Spectator);
+    SetPlayerGameTypePacket pkt;
+    pkt.mPlayerGameType = GameType::Spectator;
+    pl->sendNetworkPacket(pkt);
 }
 
 void SendFakePlayerPacket(Player* pl) {
-    // Client Player
-    auto pkt1             = AddPlayerPacket(*pl);
-    pkt1.mEntityId->rawID = pkt1.mEntityId->rawID + 114514;
-    auto randomUuid       = mce::UUID::random();
-    pkt1.mUuid            = randomUuid;
-    pl->sendNetworkPacket(pkt1);
-    // Update Skin
-    if (!pl->mSkin || !pl->mSkin->mSkinImpl) {
-        return;
+    auto randomUuid = mce::UUID::random();
+    auto uniqueId   = pl->getOrCreateUniqueID();
+    uniqueId.rawID  = uniqueId.rawID + 114514;
+
+    {
+        PlayerListPacket listPkt;
+        listPkt.mAction = PlayerListPacketType::Add;
+        auto& entries   = listPkt.mEntries.get();
+        entries.reserve(1);
+        entries.emplace_back(*pl);
+        auto& entry = entries.back();
+        entry.mUUID = randomUuid;
+        entry.mId   = uniqueId;
+        pl->sendNetworkPacket(listPkt);
     }
-    auto const& skinImpl = pl->mSkin->mSkinImpl->mObject;
-    gmlib::GMBinaryStream bs;
-    bs.writePacketHeader(MinecraftPacketIds::PlayerSkin);
-    bs.writeUuid(randomUuid);
-    bs.writeSkin(skinImpl);
-    bs.writeString("");
-    bs.writeString("");
-    bs.writeBool(true);
-    bs.sendTo(
-        *(gmlib::GMPlayer*)pl,
-        NetworkPeer::Reliability::ReliableOrdered,
-        Compressibility::Compressible
-    );
+
+    {
+        auto pkt1      = AddPlayerPacket(*pl);
+        pkt1.mEntityId = uniqueId;
+        pkt1.mUuid     = randomUuid;
+        pl->sendNetworkPacket(pkt1);
+    }
+
+    {
+        PlayerListPacket listPkt;
+        listPkt.mAction = PlayerListPacketType::Remove;
+        auto& entries   = listPkt.mEntries.get();
+        entries.reserve(1);
+        entries.emplace_back(*pl);
+        auto& entry = entries.back();
+        entry.mUUID = randomUuid;
+        entry.mId   = uniqueId;
+        pl->sendNetworkPacket(listPkt);
+    }
 }
 
 void DisableFreeCameraPacket(Player* pl) {
-    ((gmlib::GMPlayer*)pl)->setClientGamemode(pl->getPlayerGameType());
+    SetPlayerGameTypePacket gameTypePkt;
+    gameTypePkt.mPlayerGameType = pl->getPlayerGameType();
+    pl->sendNetworkPacket(gameTypePkt);
+
     auto uniqueId  = pl->getOrCreateUniqueID();
     uniqueId.rawID = uniqueId.rawID + 114514;
-    // RemoveActorPacket(uniqueId).sendTo(*pl);
-    auto pkt      = RemoveActorPacket();
-    pkt.mEntityId = uniqueId;
-    pkt.sendTo(*pl);
-    UpdateAbilitiesPacket(pl->getOrCreateUniqueID(), pl->getAbilities()).sendTo(*pl);
+    RemoveActorPacket removePkt;
+    removePkt.mEntityId = uniqueId;
+    pl->sendNetworkPacket(removePkt);
+
+    UpdateAbilitiesPacket abilitiesPkt(pl->getOrCreateUniqueID(), pl->getAbilities());
+    pl->sendNetworkPacket(abilitiesPkt);
 }
 
 /*

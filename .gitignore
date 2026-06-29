@@ -1,6 +1,7 @@
 /.vscode
 /.xmake
 /.cache
+/.opencode
 /bin
 /build
 /compile_commands.json
