@@ -4,7 +4,7 @@
 #include <unordered_set>
 
 #define MOD_NAME        "FreeCamera"
-#define TARGET_PROTOCOL 819
+#define TARGET_PROTOCOL 944
 
 extern std::unordered_set<uint64> FreeCamList;
 

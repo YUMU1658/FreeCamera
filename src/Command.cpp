@@ -8,7 +8,7 @@
 #include "mc/world/actor/player/Player.h"
 
 void RegisterCommand() {
-    auto& cmd = ll::command::CommandRegistrar::getInstance()
+    auto& cmd = ll::command::CommandRegistrar::getServerInstance()
                     .getOrCreateCommand("freecamera", "freecamera.command.desc"_tr(), CommandPermissionLevel::Any);
     ll::service::getCommandRegistry()->registerAlias("freecamera", "fc");
     cmd.overload().execute([&](CommandOrigin const& origin, CommandOutput& output) {

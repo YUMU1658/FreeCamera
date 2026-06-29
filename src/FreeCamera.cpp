@@ -9,7 +9,8 @@
 #include "mc/network/packet/RemoveActorPacket.h"
 #include "mc/network/packet/UpdateAbilitiesPacket.h"
 #include "mc/server/ServerPlayer.h"
-#include "mc/world/actor/player/SerializedSkin.h"
+#include "mc/world/actor/player/SerializedSkinImpl.h"
+#include "mc/world/actor/player/SerializedSkinRef.h"
 
 std::unordered_set<uint64> FreeCamList;
 
@@ -27,11 +28,14 @@ void SendFakePlayerPacket(Player* pl) {
     pkt1.mUuid            = randomUuid;
     pl->sendNetworkPacket(pkt1);
     // Update Skin
-    auto                           skin = pl->mSkin.get();
+    if (!pl->mSkin || !pl->mSkin->mSkinImpl) {
+        return;
+    }
+    auto const& skinImpl = pl->mSkin->mSkinImpl->mObject;
     gmlib::GMBinaryStream bs;
     bs.writePacketHeader(MinecraftPacketIds::PlayerSkin);
     bs.writeUuid(randomUuid);
-    bs.writeSkin(*skin);
+    bs.writeSkin(skinImpl);
     bs.writeString("");
     bs.writeString("");
     bs.writeBool(true);

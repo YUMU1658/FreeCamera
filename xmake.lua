@@ -7,10 +7,11 @@ if not has_config("vs_runtime") then
     set_runtimes("MD")
 end
 
+-- GMLIB 26.10.0 SDK-static matches LeviLamina 26.10.0 bedrock symbols; 26.10.14+ may fail link until GMLIB-Release updates SDK-static.
 add_requires(
-    "levilamina",
-    "levibuildscript",
-    "gmlib"
+    "levilamina 26.10.0",
+    "levibuildscript 0.6.1",
+    "gmlib 26.10.*"
 )
 
 target("FreeCamera")
